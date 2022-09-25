@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link href="https://unpkg.com/@wangeditor/editor@latest/dist/css/style.css" rel="stylesheet">
+<script src="https://unpkg.com/@wangeditor/editor@latest/dist/index.js"></script>
+
+<style>
+    #editor—wrapper {
+        border: 1px solid #ccc;
+        z-index: 100; /* 按需定义 */
+    }
+
+    #toolbar-container {
+        border-bottom: 1px solid #ccc;
+    }
+
+    #editor-container {
+        height: 200px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+
+<!--主贴-->
+<div class="card text-white border-secondary" style="background-color: #222">
+    <div class="card-header" style="background-color: #333">
+        <nav style="--bs-breadcrumb-divider: url(&#34;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M2.5 0L1 1.5 3.5 4 1 6.5 2.5 8l4-4-4-4z' fill='%236c757d'/%3E%3C/svg%3E&#34;);"
+             aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">主页</a></li>
+                <li class="breadcrumb-item">{{ post.category }}</li>
+                <li class="breadcrumb-item active" aria-current="page">{{ post.post_name }}</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="card-body">
+        <div class="row">
+            <div class="col-10">
+                <h3>{{ post.post_name }}</h3>
+                <span style="font-size: 15px; color: dimgray">{{ moment(post.create_time).format('LLL') }}</span><br>
+                <img src="{{ avatars.robohash(post.author.username) }}" style="width: 80px"> 作者：{{ post.author.username
+                }}
+                <div style="margin-top: 30px"><span>{{ post.description | safe }}</span></div>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+{% for comment in post.comments %}
+<!--如果没有回复，则是主贴-->
+{% if not comment.replied_id  %}
+<div class="card text-white border-secondary" style="background-color: #222; margin-top: 10px">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-2">
+                <img src="{{ avatars.robohash(comment.author.username) }}" style="width: 50%"><br>
+            </div>
+            <div class="col-10">
+                <div style="font-size: 12px">
+                    <span><i class="bi bi-person"></i> {{ comment.author.username }} </span>
+                    <span style="color: dimgray">{{ moment(comment.create_time).fromNow() }}</span>
+                </div>
+                {{ comment.content | safe }}
+                <!-- HTML特性，将数据存储到data-string中，然后onclick时调用 -->
+                <a href="#editor—wrapper" data-comment_id="{{ comment.id }}"
+                   data-comment_user="{{ comment.author.username }}"
+                   onclick="reply($(this).data('comment_id'), $(this).data('comment_user') )">回复</a>
+            </div>
+        </div>
+    </div>
+    {% for reply in comment.replies recursive %}
+    <div class="row">
+        <div class="col-1">
+        </div>
+        <div class="col-1">
+            <img src="{{ avatars.robohash(reply.author.username) }}" style="width: 100%"><br>
+        </div>
+
+        <div class="col-10">
+            <div style="font-size: 12px">
+                <span><i
+                        class="bi bi-person"></i> {{ reply.author.username }} -> {{ reply.replied.author.username }}</span>
+                <span style="color: dimgray">{{ moment(reply.create_time).fromNow() }}</span><br>
+            </div>
+            <span>{{ reply.content | safe }}</span>
+            <!--             HTML特性，将数据存储到data-string中，然后onclick时调用-->
+            <a href="#editor—wrapper" data-comment_id="{{ reply.id }}"
+               data-comment_user="{{ reply.author.username }}"
+               onclick="reply($(this).data('comment_id'), $(this).data('comment_user') )">回复</a>
+        </div>
+    </div>
+    {% if reply.replies %}
+    {{ loop(reply.replies ) }}
+    {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+{% endfor %}
+
+
+<div id="editor—wrapper" style="margin-top: 30px">
+    <div id="toolbar-container"><!-- 工具栏 --></div>
+    <div id="editor-container"><!-- 编辑器 --></div>
+</div>
+
+<div class="btn-group btn-group-justified" role="group">
+    <div class="btn-group" role="group">
+        <button id='submit' type="submit" class="btn btn-primary" onclick="enter()">评论</button>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    const {createEditor, createToolbar} = window.wangEditor
+
+    const editorConfig = {
+        placeholder: 'Type here...',
+        onChange(editor) {
+            const html = editor.getHtml()
+            console.log('editor content', html)
+            // 也可以同步到 <textarea>
+        },
+        MENU_CONF: {
+            'emotion': {
+                'emotions': '😀 😃 😄 😁 😆 😅 😂 🤣 😊 😇 🙂 🙃 😉'.split(' ') // 数组
+            }
+        },
+    }
+
+    const editor = createEditor({
+        selector: '#editor-container',
+        html: '<p><br></p>',
+        config: editorConfig,
+        mode: 'simple', // or 'simple'
+    })
+
+    const toolbarConfig = {
+        toolbarKeys: [
+            // 菜单 key
+            'headerSelect',
+            // 分割线
+            '|',
+            // 菜单 key
+            'bold', 'italic',
+            "through", "code", "clearStyle",
+            "emotion"
+        ]
+    }
+
+    const toolbar = createToolbar({
+        editor,
+        selector: '#toolbar-container',
+        config: toolbarConfig,
+        mode: 'simple', // or 'simple'
+    })
+
+    var replied_id = "";
+
+    function reply(comment_id, comment_user) {
+        $("#submit").text("回复：@" + comment_user);
+        replied_id = comment_id;
+    }
+
+    function enter() {
+        axios({
+            method: "post",
+            url: window.location,
+            data: {
+                content: editor.getHtml(),
+                replied_id: replied_id,
+            },
+        }).then(function (resp) {
+            location.reload();
+            toastr.success("创建成功");
+        }, function (err) {
+            toastr.error("创建时出现错误");
+        })
+    }
+
+
+</script>
+{% endblock %}

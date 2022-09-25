@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    .title-line {
+        width: 980px;
+        height: 28px;
+        margin: 0 auto;
+        border-bottom: 0px solid #ddd;
+        margin-bottom: 28px;
+        text-align: center;
+    }
+
+    .title-line .tit {
+        height: 56px;
+        line-height: 56px;
+        margin: 0 auto;
+        padding: 0 20px;
+        font-size: 40px;
+        text-align: center;
+        color: #FFFFFF;
+    }
+
+    .line {
+        border-right: 1px solid #ddd;
+        height: 300px;
+        margin-top: 28px;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="title-line" style="margin-top: 80px;">
+    <span class="tit" style=" font-size: 38px;">登录</span>
+</div>
+
+<div class="row">
+    <div class="col-md-6 line" style=" text-align: center;">
+        <img class="center-block" src="{{ url_for('static', filename='img/public.jpeg') }}" alt=""
+             style="width: 60%;">
+    </div>
+
+    <div class="col-md-6" style="margin-top: 50px;">
+        <div style="margin-left: 20px; margin-right: 140px">
+            <form method="POST" action="#">
+                <div class="form-group">
+                    <label class="font-wh">邮箱</label>
+                    <input type="email" class="form-control" name="email" aria-describedby="emailHelp" style="margin-top: 5px">
+                </div>
+                <div class="form-group" style="margin-top: 20px">
+                    <label class="font-wh">密码</label>
+                    <input type="password" class="form-control" name="password" style="margin-top: 5px">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block"  style="margin-top: 30px">登录</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
